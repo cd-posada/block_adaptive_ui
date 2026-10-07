@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="blocks/adaptive_ui/db" VERSION="20250522" COMMENT="XMLDB file for block_adaptive_ui"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+  <TABLES>
+    <TABLE NAME="block_adaptive_ui_prefs" COMMENT="Preferencias de adaptación visual del estudiante (Knowledge del ciclo MAPE-K)">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK → mdl_user.id"/>
+        <FIELD NAME="emotion" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="Emoción a la que aplica la preferencia"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="20" NOTNULL="true" COMMENT="activated | closed"/>
+        <FIELD NAME="threshold_boost" TYPE="number" LENGTH="3" DECIMALS="2" NOTNULL="true" DEFAULT="0.00" COMMENT="Incremento acumulado al umbral base (0.05 por cada cierre)"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Unix timestamp de la acción"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid_emotion" UNIQUE="false" FIELDS="userid, emotion"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="block_adaptive_ui_effectiveness" COMMENT="Knowledge: efectividad de cada adaptación aplicada o rechazada (emoción antes/después). Añadida en la Fase 7 para el reporte docente.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK → mdl_user.id"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Curso donde ocurrió — mdl_block_adaptive_ui_prefs NO tiene esta columna, esta tabla sí"/>
+        <FIELD NAME="emotion_before" TYPE="char" LENGTH="50" NOTNULL="true" COMMENT="Emoción dominante en el momento de mostrar/decidir el panel"/>
+        <FIELD NAME="confidence_before" TYPE="number" LENGTH="5" DECIMALS="4" NOTNULL="true" COMMENT="Confianza promedio de emotion_before en la ventana de 90s"/>
+        <FIELD NAME="emotion_after" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="Emoción dominante capturada en el siguiente poll() — NULL mientras está pendiente"/>
+        <FIELD NAME="confidence_after" TYPE="number" LENGTH="5" DECIMALS="4" NOTNULL="false" COMMENT="Confianza promedio de emotion_after — NULL mientras está pendiente"/>
+        <FIELD NAME="adapted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="1 = el estudiante activó la adaptación, 0 = la cerró/rechazó"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Unix timestamp de la decisión (activated/closed), no de la actualización de emotion_after"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="userid_emotionafter" UNIQUE="false" FIELDS="userid, emotion_after" COMMENT="Para localizar la fila pendiente más reciente de un usuario (emotion_after IS NULL)"/>
+        <INDEX NAME="courseid" UNIQUE="false" FIELDS="courseid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

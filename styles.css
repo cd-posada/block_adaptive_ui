@@ -1,0 +1,984 @@
+/**
+ * styles.css — Estilos base del bloque block_adaptive_ui
+ *
+ * @package    block_adaptive_ui
+ * @copyright  2025 Miguel Ángel Salazar Rincón <salazarmiguel978@gmail.com>
+ *             Politécnico Colombiano Jaime Isaza Cadavid
+ *             Trabajo de Grado — Ingeniería Informática, Medellín, Colombia
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FUENTES — empaquetadas localmente (C.3, 2026-07-28), cero llamadas a Google
+   Fonts en runtime (requisito de la sección de ética de la tesis, no una
+   preferencia). Antes: @import a fonts.googleapis.com (fuga confirmada en la
+   investigación previa a C.3). TTF→WOFF2 convertidos localmente desde el
+   origen canónico OFL (github.com/google/fonts), subconjunto latino, sin pasar
+   en ningún momento por fonts.gstatic.com. Sirven vía el mecanismo nativo de
+   Moodle theme/font.php ([[font:component|archivo]], resuelto por
+   theme_config::resolve_font_location() contra <plugin>/fonts/<archivo> — esa
+   ruta debe ser PLANA, sin subcarpetas, font.php valida el nombre con una
+   regex que prohíbe "/"). Licencias SIL OFL de las 4 familias en
+   fonts/licenses/ (requisito de distribución de la licencia).
+   Inter/Poppins: mismos pesos que el @import que reemplazan (400/500/600 y
+   500/600/700 respectivamente) — ningún elemento existente pierde su peso.
+   Caveat/Bebas Neue: un solo corte estático (400/Regular), nuevas para C.3. */
+@font-face {
+    font-family: 'Inter';
+    src: url('[[font:block_adaptive_ui|Inter-Regular.woff2]]') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url('[[font:block_adaptive_ui|Inter-Medium.woff2]]') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Inter';
+    src: url('[[font:block_adaptive_ui|Inter-SemiBold.woff2]]') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Poppins';
+    src: url('[[font:block_adaptive_ui|Poppins-Medium.woff2]]') format('woff2');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Poppins';
+    src: url('[[font:block_adaptive_ui|Poppins-SemiBold.woff2]]') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Poppins';
+    src: url('[[font:block_adaptive_ui|Poppins-Bold.woff2]]') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Caveat';
+    src: url('[[font:block_adaptive_ui|Caveat-Regular.woff2]]') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Bebas Neue';
+    src: url('[[font:block_adaptive_ui|BebasNeue-Regular.woff2]]') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* El grueso del fundido de una adaptación lo escribe ESTA regla, no el Adaptation Transitioner
+   (amd/src/mape/execute/transition_manager.js): el transitioner solo toca las pocas propiedades
+   que pasan por estilo inline (opacity en 'hide', y la propiedad concreta de cada 'set_style').
+   Por eso el ritmo elegido por el LLM (ISATINE etapa 5) se propaga vía custom property: sin
+   esto, el modo "suave" no se sentiría suave.
+   La razón 1.25 preserva exactamente la relación 0.5s/0.4s que tenía esta regla antes de
+   parametrizarse: los colores siempre funden un 25% más lento que la tipografía, sea cual sea
+   el ritmo activo. Los fallbacks de 800ms solo actúan si la variable no estuviera definida
+   (no puede pasar: :root la declara) — se mantienen alineados con ella por coherencia. */
+body[data-emotion] *,
+body[data-emotion] *::before,
+body[data-emotion] *::after {
+    transition: background-color calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                color calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                border-color calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                box-shadow calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                font-size var(--adaptive-transition-duration, 800ms) ease,
+                line-height var(--adaptive-transition-duration, 800ms) ease,
+                letter-spacing var(--adaptive-transition-duration, 800ms) ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CSS CUSTOM PROPERTIES — valores por defecto (neutros)
+   Solo sirven como punto de partida. El JS los sobreescribe al activar cambios.
+   ───────────────────────────────────────────────────────────────────────────── */
+:root {
+    --emotion-bg:             #f5f5f5;
+    --emotion-primary:        #0f6cbf;
+    /* Derivadas por sanitizer::derive_contrast_vars() a partir de --emotion-primary; nunca las
+       fija el LLM. Existen porque --emotion-primary tiene DOS roles con requisitos de contraste
+       opuestos: fondo de cabecera/botones, y color de texto de títulos/enlaces. Un azul pastel
+       (lo que la Tabla 24 pide para Frustrado) sirve de fondo pero es ilegible como texto.
+         --emotion-primary-text : el mismo tono oscurecido hasta 4.5:1 (WCAG AA) sobre blanco.
+         --emotion-on-primary   : el texto que se lee ENCIMA de --emotion-primary.
+       Los valores de abajo son los que corresponden al #0f6cbf por defecto. */
+    --emotion-primary-text:   #0f6cbf;
+    --emotion-on-primary:     #ffffff;
+    --emotion-text-size:      1rem;
+    --emotion-spacing:        1rem;
+    --emotion-font-weight:    400;
+    --emotion-line-height:    1.5;
+    --emotion-border-radius:  4px;
+    /* 0em y NO "normal" (2026-09-16): medido en Chrome real, el espaciado entre letras era la
+       única propiedad de la regla comodín que, estando en la lista de transiciones, seguía
+       saltando de golpe. La causa es que "normal" es una palabra clave, no una longitud, y el
+       navegador no sabe interpolar entre una palabra y un "0.01em" — el único valor que el LLM
+       ha emitido nunca para esta variable. Con 0em el punto de partida ya es una longitud y la
+       transición ocurre. Visualmente 0em equivale a normal para las fuentes del plugin.
+       (El sanitizador sigue aceptando "normal" si el LLM lo propusiera; en ese caso concreto
+       el cambio volvería a saltar, pero nunca se ha observado.) */
+    --emotion-letter-spacing: 0em;
+    /* Ritmo de la transición — etapa 5 ("Transition") del modelo ISATINE. La fija dom_applier
+       según el modo que eligió el LLM para la emoción activa. No la propone el LLM
+       directamente, igual que las dos variables de contraste de arriba.
+       SINCRONIZACIÓN MANUAL: debe coincidir con MODES.gradual.duration de
+       transition_manager.js (400 × SPEED) y con DEFAULT_CSS en mape/config.js. La constante
+       SPEED no puede alcanzar este archivo, así que al recalibrar el ritmo hay que subir el
+       valor a mano en los tres sitios — incluidos los fallbacks var(..., 800ms) de abajo. */
+    --adaptive-transition-duration: 800ms;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TRANSICIONES — suaves al aplicar/revertir cambios de emoción
+   Se excluye el panel de recomendación para que aparezca instantáneamente.
+   ───────────────────────────────────────────────────────────────────────────── */
+/* Estas tres capas NO funden su fondo, a propósito (2026-08-08).
+   Son las que se apoyan DIRECTAMENTE sobre <body>, así que cualquier fundido suyo es una
+   ventana por la que se ve lo que haya pintado en body. Aburrido pinta ahí un
+   "backgroundImage: linear-gradient(135deg, ...)" — una banda DIAGONAL saturada — y durante los
+   0.4s del fundido esa banda asomaba y luego quedaba tapada: el "destello amarillo como un rayo
+   sobre la pantalla" reportado. Cambiaba de color en cada intento porque el degradado lo elige
+   el LLM (#FFD700 dorado un intento, #FFDAB9 durazno el siguiente).
+   El cambio de fondo de estas capas es entre dos tonos casi blancos, así que aplicarlo de golpe
+   es imperceptible. Las capas interiores (tarjetas, bloques, cabecera) SÍ conservan su fundido:
+   se apoyan sobre #page, que ya es opaco, y al fundirse no revelan body. */
+body[data-emotion] #page-wrapper,
+body[data-emotion] #page,
+body[data-emotion] #page-content {
+    transition: none;
+}
+
+body[data-emotion] #page-header,
+body[data-emotion] .navbar,
+body[data-emotion] nav.navbar {
+    transition: background-color var(--adaptive-transition-duration, 800ms) ease;
+}
+
+body[data-emotion] .card,
+body[data-emotion] .block,
+body[data-emotion] .activity-item,
+body[data-emotion] .block_adaptive_ui {
+    transition: border-radius var(--adaptive-transition-duration, 800ms) ease,
+                border-color var(--adaptive-transition-duration, 800ms) ease,
+                background-color var(--adaptive-transition-duration, 800ms) ease;
+}
+
+body[data-emotion] .btn-primary {
+    transition: background-color var(--adaptive-transition-duration, 800ms) ease,
+                border-color var(--adaptive-transition-duration, 800ms) ease;
+}
+
+body[data-emotion] a:not(.btn):not(.nav-link) {
+    transition: color var(--adaptive-transition-duration, 800ms) ease;
+}
+
+/* #region-main-box es el ÚNICO elemento de la página cuyo layout cambia: "adaptive-zen-layout"
+   lo estrecha a 740px y "adaptive-focused-content" a 720px con su propio padding/margin.
+   Medido en Chrome real (2026-09-16): max-width y padding eran los únicos cambios que seguían
+   saltando de golpe teniendo arreglo posible, y son el salto MÁS LLAMATIVO de toda la
+   adaptación — la columna de contenido se encoge de una vez, mientras todo lo demás funde.
+   En el recuento por propiedades apenas son 3 cambios, pero el peso visual no se mide contando.
+
+   Dos decisiones que no son cosméticas:
+
+   1. Repite a propósito las 7 propiedades de la regla comodín. "transition" es una shorthand,
+      así que una regla más específica sobre el mismo elemento la REEMPLAZA entera: si aquí solo
+      se declararan max-width/padding/margin, este elemento perdería el fundido de color y
+      tipografía que sí tenía antes.
+   2. Va acotada a UN elemento y no a "*". Transicionar propiedades que disparan recálculo de
+      layout en toda la página provoca tirones; en un solo contenedor es inofensivo. Y
+      #region-main-box cuelga de #page-content, no se apoya directamente sobre <body>, así que
+      no reabre el destello diagonal de Aburrido que obligó a dejar esas tres capas en
+      "transition: none". */
+body[data-emotion] #region-main-box {
+    /* Punto de partida explícito para el ancho. Sin esto el valor inicial es "max-width: none",
+       una palabra clave, y el navegador no sabe interpolar entre una palabra y "740px" — el
+       mismo motivo por el que --emotion-letter-spacing pasó de "normal" a 0em. Verificado en
+       Chrome real: desde "none" el ancho saltaba de golpe; desde 100% interpola vía calc()
+       (valores intermedios reales medidos: calc(35.47% + 477.54px) → calc(4.72% + 705.10px)).
+       100% y no un valor en px para no fijar ninguna anchura: equivale al ancho que el
+       contenedor ya tenía, así que no altera nada mientras ninguna clase lo estreche.
+       Va declarada AQUÍ, antes que adaptive-zen-layout / adaptive-focused-content en este mismo
+       archivo: las tres reglas tienen idéntica especificidad (1,1,1), así que el desempate lo
+       decide el orden y estas de abajo deben seguir ganando. Si alguien mueve este bloque
+       después de ellas, la columna deja de estrecharse. */
+    max-width: 100%;
+    transition: background-color calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                color calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                border-color calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                box-shadow calc(var(--adaptive-transition-duration, 800ms) * 1.25) ease,
+                font-size var(--adaptive-transition-duration, 800ms) ease,
+                line-height var(--adaptive-transition-duration, 800ms) ease,
+                letter-spacing var(--adaptive-transition-duration, 800ms) ease,
+                max-width var(--adaptive-transition-duration, 800ms) ease,
+                padding var(--adaptive-transition-duration, 800ms) ease,
+                margin var(--adaptive-transition-duration, 800ms) ease;
+}
+
+/* El panel de recomendación NO hereda transiciones de body[data-emotion] */
+#adaptive-recommendation-panel,
+#adaptive-recommendation-panel * {
+    transition: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   MOVIMIENTO REDUCIDO — WCAG 2.1 SC 2.3.3 (Animation from Interactions)
+   Hasta esta fase el plugin no tenía ni una sola guarda de movimiento: seis reglas
+   `animation:` corrían siempre (el pulso de Aburrido/Compromiso, el bounce de íconos, el
+   fadeInDown del panel), y ninguna transición consultaba la preferencia del sistema.
+   Quien declara "reducir movimiento" en su sistema operativo lo hace por vértigo, migraña o
+   trastorno vestibular: es una necesidad, no una preferencia estética, y ni el LLM ni la
+   Tabla 24 tienen autoridad para sobreescribirla.
+   Doble cobertura a propósito: transition_manager::resolveMode() ya fuerza "inmediata" en JS,
+   pero esta regla cubre además las animaciones en bucle, que no pasan por el transitioner.
+   ───────────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --adaptive-transition-duration: 0ms;
+    }
+
+    body[data-emotion],
+    body[data-emotion] *,
+    body[data-emotion] *::before,
+    body[data-emotion] *::after,
+    [class*="adaptive-"],
+    [class*="adaptive-"]::before,
+    [class*="adaptive-"]::after {
+        animation: none !important;
+        transition-duration: 0ms !important;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ELEMENTOS ADAPTABLES — solo se activan cuando body tiene data-emotion
+   El estudiante debe hacer clic en "Activar cambios" para llegar aquí.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Fondo de página */
+body[data-emotion],
+body[data-emotion] #page-wrapper,
+body[data-emotion] #page,
+body[data-emotion] .drawer,
+body[data-emotion] [data-region="blocks-column"] {
+    background-color: var(--emotion-bg) !important;
+}
+
+/* Color primario: header, navbar, botones */
+body[data-emotion] #page-header,
+body[data-emotion] #page-header .card,
+body[data-emotion] #page-header .card-header,
+body[data-emotion] .navbar,
+body[data-emotion] nav.navbar {
+    background-color: var(--emotion-primary) !important;
+    border-color:     var(--emotion-primary) !important;
+}
+
+body[data-emotion] .btn-primary,
+body[data-emotion] .btn-primary:hover,
+body[data-emotion] .btn-primary:focus,
+body[data-emotion] input[type="submit"] {
+    background-color: var(--emotion-primary) !important;
+    border-color:     var(--emotion-primary) !important;
+}
+
+/* Links */
+body[data-emotion] a:not(.btn):not(.nav-link) {
+    color: var(--emotion-primary-text) !important;
+}
+
+/* Tipografía */
+body[data-emotion],
+body[data-emotion] p,
+body[data-emotion] li,
+body[data-emotion] td,
+body[data-emotion] th,
+body[data-emotion] .course-content,
+body[data-emotion] .activity-item .activity-name,
+body[data-emotion] .section-item,
+body[data-emotion] .generalbox,
+body[data-emotion] .box {
+    font-size:       var(--emotion-text-size) !important;
+    line-height:     var(--emotion-line-height) !important;
+    letter-spacing:  var(--emotion-letter-spacing);
+}
+
+body[data-emotion] h1,
+body[data-emotion] h2,
+body[data-emotion] h3,
+body[data-emotion] h4,
+body[data-emotion] h5,
+body[data-emotion] h6,
+body[data-emotion] .h1,
+body[data-emotion] .h2,
+body[data-emotion] .h3,
+body[data-emotion] .h4,
+body[data-emotion] .h5,
+body[data-emotion] .h6,
+body[data-emotion] .instancename,
+body[data-emotion] .sectionname {
+    font-weight: var(--emotion-font-weight) !important;
+    color:       var(--emotion-primary-text) !important;
+}
+
+/* Cards y bloques */
+body[data-emotion] .card,
+body[data-emotion] .block,
+body[data-emotion] .activity-item,
+body[data-emotion] .section-item,
+body[data-emotion] .course-section {
+    border-radius:    var(--emotion-border-radius) !important;
+    margin-bottom:    var(--emotion-spacing) !important;
+    border-left:      4px solid var(--emotion-primary) !important;
+    background-color: var(--emotion-bg) !important;
+}
+
+/* Navegación del curso */
+body[data-emotion] .tertiary-navigation,
+body[data-emotion] .course-tabs .nav-tabs {
+    border-bottom-color: var(--emotion-primary) !important;
+}
+
+body[data-emotion] .nav-tabs .nav-link.active {
+    border-bottom: 3px solid var(--emotion-primary) !important;
+    color:         var(--emotion-primary-text) !important;
+    font-weight:   var(--emotion-font-weight) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FRUSTRADO — override de header y paleta pastel azul
+   ───────────────────────────────────────────────────────────────────────────── */
+body[data-emotion="Frustrado"] #page-header,
+body[data-emotion="Frustrado"] .navbar {
+    background-color: var(--emotion-primary, #90CAF9) !important;
+    color: #1a1a1a !important;
+}
+
+body[data-emotion="Frustrado"] .badge-danger,
+body[data-emotion="Frustrado"] .alert-danger,
+body[data-emotion="Frustrado"] .text-danger {
+    background-color: #ECEFF1 !important;
+    color: #455A64 !important;
+    border-color: #CFD8DC !important;
+}
+
+body[data-emotion="Frustrado"] #region-main {
+    background-color: transparent !important;
+    box-shadow: none !important;
+}
+
+body[data-emotion="Frustrado"] .generalbox,
+body[data-emotion="Frustrado"] .book_content,
+body[data-emotion="Frustrado"] .que {
+    background-color: #FFFFFF !important;
+    border: none !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+    border-radius: 8px !important;
+}
+
+@media (max-width: 768px) {
+    body[data-emotion="Frustrado"] .generalbox,
+    body[data-emotion="Frustrado"] .book_content,
+    body[data-emotion="Frustrado"] .que {
+        padding: 1rem !important;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CONTRASTE DE TEXTO EN HEADER/NAVBAR — CALCULADO, NO SUPUESTO
+   Antes había aquí tres bloques por emoción que daban por hecho qué emociones ponen
+   fondo oscuro ("Confundido (#1565C0), Aburrido (#00695C); Frustrado usa pastel claro").
+   Esa suposición era falsa: el color del fondo lo elige el LLM en tiempo de ejecución,
+   así que podía fallar para cualquier emoción — y ya fallaba para Aburrido, que eligió
+   #FF8C00 (2.3:1) y recibía texto blanco encima.
+   Ahora --emotion-on-primary lo calcula sanitizer::derive_contrast_vars() desde el color
+   REAL, así que una sola regla genérica vale para las 4 emociones y para cualquier color
+   futuro. El text-shadow se mantiene solo cuando el texto es claro (ver más abajo).
+   ───────────────────────────────────────────────────────────────────────────── */
+body[data-emotion] #page-header .page-header-headings,
+body[data-emotion] #page-header .page-header-headings h1,
+body[data-emotion] .breadcrumb-item,
+body[data-emotion] .breadcrumb-item a,
+body[data-emotion] .navbar .nav-link,
+body[data-emotion] nav.navbar a {
+    color: var(--emotion-on-primary) !important;
+}
+
+body[data-emotion] .breadcrumb-item + .breadcrumb-item::before {
+    color: var(--emotion-on-primary) !important;
+    opacity: 0.7;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   OVERRIDE ACENTO MOODLE POR EMOCIÓN
+   Las reglas genéricas ya aplican var(--emotion-primary) a links y tabs activas.
+   Aquí se añaden: hover de tabs, focus rings y selectores de contenido específico.
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Frustrado — acentos azul profundo (el comentario decía "marrón cálido": resto de la paleta
+   anterior al rediseño, el valor real siempre fue #1565C0) */
+body[data-emotion="Frustrado"] a:not(.btn),
+body[data-emotion="Frustrado"] .nav-tabs .nav-link.active,
+body[data-emotion="Frustrado"] .nav-tabs .nav-link:hover,
+body[data-emotion="Frustrado"] .activity-header h2,
+body[data-emotion="Frustrado"] .book_toc a,
+body[data-emotion="Frustrado"] .lesson-menu a {
+    color: #1565C0 !important;
+}
+body[data-emotion="Frustrado"] .nav-tabs .nav-link.active,
+body[data-emotion="Frustrado"] .nav-tabs .nav-link:hover {
+    border-bottom-color: #1565C0 !important;
+}
+
+/* Confundido — acentos azul profundo */
+body[data-emotion="Confundido"] a:not(.btn),
+body[data-emotion="Confundido"] .nav-tabs .nav-link.active,
+body[data-emotion="Confundido"] .nav-tabs .nav-link:hover,
+body[data-emotion="Confundido"] .activity-header h2,
+body[data-emotion="Confundido"] .book_toc a,
+body[data-emotion="Confundido"] .lesson-menu a {
+    color: #1565C0 !important;
+}
+body[data-emotion="Confundido"] .nav-tabs .nav-link.active,
+body[data-emotion="Confundido"] .nav-tabs .nav-link:hover {
+    border-bottom-color: #1565C0 !important;
+}
+
+/* Aburrido — acentos teal */
+body[data-emotion="Aburrido"] a:not(.btn),
+body[data-emotion="Aburrido"] .nav-tabs .nav-link.active,
+body[data-emotion="Aburrido"] .nav-tabs .nav-link:hover,
+body[data-emotion="Aburrido"] .activity-header h2,
+body[data-emotion="Aburrido"] .book_toc a,
+body[data-emotion="Aburrido"] .lesson-menu a {
+    color: #00695C !important;
+}
+body[data-emotion="Aburrido"] .nav-tabs .nav-link.active,
+body[data-emotion="Aburrido"] .nav-tabs .nav-link:hover {
+    border-bottom-color: #00695C !important;
+}
+
+/* Guard: los links dentro del banner se pintan con el texto que SÍ se lee encima del fondo real
+   del banner. Antes esto fijaba #ffffff a secas y, al llevar un ID (especificidad 1,1,2), ganaba
+   a TODAS las reglas de acento oscuro de más arriba (que no tienen ningún ID). Con una cabecera
+   pastel — que es exactamente lo que la Tabla 24 pide para Frustrado — eso pintaba blanco sobre
+   casi-blanco: la miga de pan quedaba ilegible. La regla se escribió para las emociones de
+   cabecera oscura pero nunca se acotó a ellas. */
+body[data-emotion] #page-header a,
+body[data-emotion] #page-header .breadcrumb-item a {
+    color: var(--emotion-on-primary) !important;
+}
+
+/* Focus rings coherentes con la emoción */
+body[data-emotion="Frustrado"] a:focus,
+body[data-emotion="Frustrado"] .btn:focus {
+    outline-color: #1565C0 !important;
+    box-shadow: 0 0 0 0.2rem rgba(93, 64, 55, 0.25) !important;
+}
+body[data-emotion="Confundido"] a:focus,
+body[data-emotion="Confundido"] .btn:focus {
+    outline-color: #1565C0 !important;
+    box-shadow: 0 0 0 0.2rem rgba(21, 101, 192, 0.25) !important;
+}
+body[data-emotion="Aburrido"] a:focus,
+body[data-emotion="Aburrido"] .btn:focus {
+    outline-color: #00695C !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 105, 92, 0.25) !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   COMPORTAMIENTOS ESPECIALES POR EMOCIÓN
+   ───────────────────────────────────────────────────────────────────────────── */
+
+/* Confundido: resaltar enlaces de ayuda */
+body[data-emotion="Confundido"] .glossarytooltip,
+body[data-emotion="Confundido"] a[href*="help"],
+body[data-emotion="Confundido"] a[href*="glossary"] {
+    font-weight:     bold;
+    text-decoration: underline;
+    color:           var(--emotion-primary-text);
+}
+
+/* Aburrido: animación suave en cards */
+body[data-emotion="Aburrido"] .activity-item,
+body[data-emotion="Aburrido"] .card {
+    animation: pulse-attention 3s ease-in-out infinite;
+}
+
+@keyframes pulse-attention {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.0); }
+    50%       { box-shadow: 0 0 8px 2px rgba(230, 126, 34, 0.3); }
+}
+
+/* Frustrado: ocultar elementos secundarios */
+body[data-emotion="Frustrado"] .block_calendar_month,
+body[data-emotion="Frustrado"] .block_news_items {
+    opacity:    0.4;
+    transition: opacity 1.5s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   INDICADOR DE ESTADO DEL BLOQUE (sidebar — siempre visible)
+   ───────────────────────────────────────────────────────────────────────────── */
+.adaptive-ui-status {
+    display:     flex;
+    align-items: center;
+    gap:         6px;
+    font-size:   0.85rem;
+    color:       #666;
+    padding:     4px 0;
+}
+
+/* Toggle switch — similar al Edit Mode de Moodle */
+.adaptive-ui-toggle-label {
+    position:    relative;
+    display:     inline-block;
+    width:       36px;
+    height:      20px;
+    cursor:      pointer;
+    flex-shrink: 0;
+    margin:      0;
+}
+
+.adaptive-ui-toggle-label input {
+    opacity:  0;
+    width:    0;
+    height:   0;
+    position: absolute;
+}
+
+.adaptive-ui-toggle-slider {
+    position:      absolute;
+    inset:         0;
+    background:    #ccc;
+    border-radius: 20px;
+    transition:    background 0.3s ease;
+}
+
+.adaptive-ui-toggle-slider::before {
+    content:       '';
+    position:      absolute;
+    width:         14px;
+    height:        14px;
+    left:          3px;
+    top:           3px;
+    background:    white;
+    border-radius: 50%;
+    transition:    transform 0.3s ease;
+    box-shadow:    0 1px 3px rgba(0,0,0,0.25);
+}
+
+.adaptive-ui-toggle-label input:checked + .adaptive-ui-toggle-slider {
+    background: #0f6cbf;
+}
+
+.adaptive-ui-toggle-label input:checked + .adaptive-ui-toggle-slider::before {
+    transform: translateX(16px);
+}
+
+.adaptive-ui-toggle-label input:focus + .adaptive-ui-toggle-slider {
+    outline: 2px solid #0f6cbf;
+    outline-offset: 1px;
+}
+
+#adaptive-ui-label {
+    font-style: italic;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ICONO DE AYUDA EXPANDIDO (cuando icon_support >= 0.3)
+   ───────────────────────────────────────────────────────────────────────────── */
+/* Acotada a descendientes el 2026-08-08. Antes era un selector PELADO (.adaptive-help-expanded)
+   y el LLM la aplicaba sobre "body" — el único selector siempre disponible — con efectos
+   catastróficos sobre la página entera:
+     display: inline-flex  -> body colapsa al ancho de su contenido en vez de ocupar todo
+     border: 1px solid     -> un recuadro alrededor de body: la "línea negra en medio" reportada
+     font-size: 0.85em     -> TODO el texto de la página encogido un 15%
+   Es exactamente el mismo defecto que tuvo adaptive-engaged-pulse (que animaba la página
+   completa), y aplica el mismo patrón de corrección: body es solo un MARCADOR DE MODO, la regla
+   real va en el selector del descendiente.
+   Las dos últimas alternativas cubren el caso de aplicarla directamente sobre un elemento de
+   ayuda concreto (".helptooltip" sí está en STATIC_SELECTOR_GATES). */
+body.adaptive-help-expanded .helptooltip,
+body.adaptive-help-expanded .glossarytooltip,
+body.adaptive-help-expanded a[href*="help"],
+body.adaptive-help-expanded [data-toggle="popover"],
+.helptooltip.adaptive-help-expanded,
+.glossarytooltip.adaptive-help-expanded {
+    display:     inline-flex !important;
+    align-items: center;
+    gap:         4px;
+    padding:     2px 6px;
+    border:      1px solid currentColor;
+    border-radius: 4px;
+    font-size:   0.85em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TRUNCADO ADAPTATIVO — primitiva general (C.3, 2026-07-28), ya no específica de
+   Confundido. Umbrales por emoción en mape/config.js::TRUNCATE_THRESHOLDS —
+   mecanismo de colapso/expansión sin cambios (toggle vía click, manejado por
+   attachTruncateDelegate() en panels.js, B.3). Etiqueta parametrizable: el
+   texto del botón se lee de custom properties con el string de hoy como
+   fallback, en vez de quedar fijo en el CSS — mape/config.js::TRUNCATE_LABELS
+   es la fuente de verdad si algo llega a fijar --adaptive-truncate-label-*
+   por elemento; hoy nadie lo hace todavía, así que el fallback ("Ver más
+   ▾"/"Ver menos ▴") es lo que se ve siempre, igual que antes de C.3.
+   ───────────────────────────────────────────────────────────────────────────── */
+.adaptive-truncate {
+    max-height: 4.8em;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    position: relative;
+    cursor: pointer;
+    transition: max-height 0.5s ease;
+}
+.adaptive-truncate::after {
+    content: var(--adaptive-truncate-label-collapsed, "Ver más ▾");
+    display: block;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: linear-gradient(to right, transparent, var(--emotion-bg, #fff) 40%);
+    padding: 0 0.5em 0 2em;
+    color: var(--emotion-primary-text, #1565C0);
+    font-weight: 600;
+    font-size: 0.9em;
+}
+.adaptive-truncate.expanded {
+    max-height: none;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+}
+.adaptive-truncate.expanded::after {
+    content: var(--adaptive-truncate-label-expanded, "Ver menos ▴");
+    position: static;
+    background: none;
+    padding: 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ICONOS MÍNIMOS — Frustrado / Confundido (modo zen)
+   ───────────────────────────────────────────────────────────────────────────── */
+body.adaptive-minimal-icons .activityinstance .icon,
+body.adaptive-minimal-icons .section li a .icon {
+    filter: grayscale(0.7) opacity(0.85);
+    width: 20px;
+    height: 20px;
+    padding: 6px;
+    box-sizing: content-box;
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+body.adaptive-minimal-icons .activityinstance .icon:hover,
+body.adaptive-minimal-icons .section li a .icon:hover {
+    filter: none;
+    transform: scale(1.1);
+}
+body.adaptive-minimal-icons .fa,
+body.adaptive-minimal-icons [class^="fa-"],
+body.adaptive-minimal-icons [class*=" fa-"] {
+    opacity: 0.55;
+    filter: grayscale(0.5);
+    transition: opacity 0.4s ease, filter 0.4s ease;
+}
+body.adaptive-minimal-icons .fa:hover,
+body.adaptive-minimal-icons [class^="fa-"]:hover {
+    opacity: 1;
+    filter: none;
+}
+body.adaptive-minimal-icons img[role="presentation"],
+body.adaptive-minimal-icons .fp-icon img {
+    display: none !important;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ABURRIDO — gradient de fondo, encabezados, botón naranja
+   ───────────────────────────────────────────────────────────────────────────── */
+body[data-emotion="Aburrido"] {
+    background-image: linear-gradient(180deg, var(--emotion-bg, #E8F5E9) 0%, #FFFFFF 60%);
+}
+body[data-emotion="Aburrido"] h1,
+body[data-emotion="Aburrido"] h2,
+body[data-emotion="Aburrido"] h3,
+body[data-emotion="Aburrido"] h4 {
+    letter-spacing: -0.01em;
+    transition: font-family 0.4s ease;
+}
+body[data-emotion="Aburrido"] .btn-primary,
+body[data-emotion="Aburrido"] .btn-primary:hover,
+body[data-emotion="Aburrido"] .btn-primary:focus,
+body[data-emotion="Aburrido"] input[type="submit"] {
+    background-color: var(--emotion-accent-warm, #FF9800) !important;
+    border-color:     var(--emotion-accent-warm, #FF9800) !important;
+    /* Bootstrap pinta .btn-primary con texto blanco, que sobre el naranja cálido daba
+       2.16-2.65:1 en 3 de los 4 acentos que el LLM eligió realmente. Se calcula igual que
+       --emotion-on-primary; el valor de reserva cubre el caso en que el LLM no fije el acento
+       (blanco sobre #FF9800 = 2.16:1, oscuro = 8.02:1). */
+    color:            var(--emotion-on-accent-warm, #1a1a1a) !important;
+    transition: all 0.4s ease;
+}
+body[data-emotion="Aburrido"] .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ANIMACIONES — Aburrido (pulse naranja) y Concentrado (pulse azul suave)
+   ───────────────────────────────────────────────────────────────────────────── */
+/* BUG corregido (2026-07-06): estas dos reglas estaban definidas directamente sobre el
+   selector de clase (".adaptive-engaged-pulse { animation: ... }"), sin acotar a un
+   descendiente. adaptive_monitor.js siempre añade la clase a "body" (es el único selector
+   "add_class" que el whitelist garantiza disponible siempre) — con la regla vieja, eso
+   animaba la página COMPLETA (scale/box-shadow en body), un "latido" visible de toda la
+   pantalla en vez de solo las tarjetas de actividad. Patrón de referencia obligatorio para
+   cualquier animación futura añadida vía add_class sobre "body": la clase en el selector de
+   "body.<clase>" es solo un MARCADOR DE ESTADO — nunca debe llevar animation/transform
+   directamente; la animación real va en la regla del DESCENDIENTE
+   ("body.<clase> .selector-real"). Se cubre también el caso en que la clase se añade
+   directamente sobre el propio elemento de actividad (ver plan_engine.py::
+   _concentrado_static(), que hace exactamente eso) con el segundo selector de cada regla.
+*/
+body.adaptive-engaged-pulse .activity-item,
+body.adaptive-engaged-pulse .activity,
+.activity-item.adaptive-engaged-pulse,
+.activity.adaptive-engaged-pulse {
+    animation: adaptiveEngagedPulse 3s ease-in-out infinite;
+}
+@keyframes adaptiveEngagedPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
+    50%       { transform: scale(1.015); box-shadow: 0 0 12px 4px rgba(255, 152, 0, 0.15); }
+}
+
+body[data-emotion="Concentrado"].adaptive-engagement-glow .btn-primary,
+body[data-emotion="Concentrado"].adaptive-engagement-glow a.btn {
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.15);
+    transition: box-shadow 0.6s ease;
+}
+body.adaptive-engaged-pulse-soft .activity-item,
+body.adaptive-engaged-pulse-soft .activity,
+.activity-item.adaptive-engaged-pulse-soft,
+.activity.adaptive-engaged-pulse-soft {
+    animation: adaptiveEngagedPulseSoft 6s ease-in-out infinite;
+}
+@keyframes adaptiveEngagedPulseSoft {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(25, 118, 210, 0.0); }
+    50%       { box-shadow: 0 0 16px 2px rgba(25, 118, 210, 0.18); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ESPERANZA (OCC) — refuerzo pre-evaluación, cualquier emoción negativa en un quiz.
+   Ver plan_engine.py, sección "REGLAS OCC ADICIONALES". Tratamiento deliberadamente
+   DISTINTO del glow de Concentrado (.adaptive-engagement-glow) y del pulse de Aburrido/
+   Concentrado (.adaptive-engaged-pulse / -soft): acento ESTÁTICO (sin animación) en
+   dorado/ámbar — evoca una meta alcanzable, no "compromiso" ni "diversión", para no diluir
+   el significado de esas otras señales al mezclarse con ellas.
+   ───────────────────────────────────────────────────────────────────────────── */
+/* El dorado se oscureció de #E8B84B a #ad7f16 el 2026-08-08. El original daba 1.84:1 contra
+   blanco y WCAG 2.1 SC 1.4.11 (Non-text Contrast) exige 3:1 para elementos gráficos que
+   TRANSMITEN INFORMACIÓN — y este la transmite: es la señal OCC de Esperanza en evaluaciones
+   (ver prompts/base.php). Reportado como "un amarillo que se ve medio oculto", que es
+   exactamente el síntoma de una señal por debajo del umbral de percepción.
+   El tono se conserva intacto (42° en ambos), así que sigue siendo dorado y sigue a más de 100°
+   de las cuatro paletas de emoción — su identidad propia, que base.php exige no diluir, no se
+   toca. Ahora rinde 3.61:1, con margen sobre el mínimo. */
+body.adaptive-hope-indicator #region-main-box {
+    border-top: 3px solid #ad7f16;
+    box-shadow: 0 2px 0 0 rgba(173, 127, 22, 0.25);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ABURRIDO — Animaciones de íconos y escalado de imágenes
+   ───────────────────────────────────────────────────────────────────────────── */
+@keyframes icon-bounce {
+    0%, 100% { transform: translateY(0);    }
+    50%       { transform: translateY(-4px); }
+}
+
+body.adaptive-aburrido-icons .activityinstance .icon,
+body.adaptive-aburrido-icons .section li a .icon {
+    transition: transform 0.3s ease, filter 0.3s ease;
+}
+body.adaptive-aburrido-icons .activityinstance:hover .icon {
+    animation: icon-bounce 0.6s ease;
+    filter: saturate(1.4) brightness(1.1);
+}
+body.adaptive-aburrido-icons .course-content img:not([alt='']) {
+    transition: transform 0.4s ease;
+}
+body.adaptive-aburrido-icons .course-content img:not([alt='']):hover {
+    transform: scale(1.04);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CONCENTRADO — Íconos a todo color con micro-animación al hover
+   ───────────────────────────────────────────────────────────────────────────── */
+body[data-emotion="Concentrado"] .activityinstance .icon,
+body[data-emotion="Concentrado"] .section li a .icon {
+    filter: saturate(1.25) brightness(1.05);
+    transition: filter 0.4s ease, transform 0.3s ease;
+}
+body[data-emotion="Concentrado"] .course-content .activity.available .activityinstance {
+    transition: transform 0.3s ease;
+}
+body[data-emotion="Concentrado"] .course-content .activity.available:hover .activityinstance {
+    transform: translateX(4px);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CONTENIDO ENFOCADO — Frustrado (2026-07-06)
+   #region-main-box es nivel FIJO (mismo landmark ya usado por adaptive-zen-layout y
+   adaptive-hope-indicator, universal en las 4 plantillas base de Boost) — no depende del
+   tipo de actividad ni del contenido variable del curso.
+   ───────────────────────────────────────────────────────────────────────────── */
+body.adaptive-focused-content #region-main-box {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   ZEN LAYOUT — Frustrado / Confundido (columna única con máximo whitespace)
+   ───────────────────────────────────────────────────────────────────────────── */
+body.adaptive-zen-layout #region-main-box {
+    max-width: 740px;
+    margin: 0 auto;
+}
+body.adaptive-zen-layout .course-content .section .content {
+    padding: 1.5rem 0.5rem;
+}
+body.adaptive-zen-layout .course-content .section-summary {
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+body.adaptive-zen-layout .section-modchooser,
+body.adaptive-zen-layout .course-content .section-navigation,
+body.adaptive-zen-layout .pagination {
+    display: none !important;
+}
+body.adaptive-zen-layout .course-content .current {
+    background: rgba(13, 71, 161, 0.04);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   PANEL MOTIVACIONAL — Confundido (cita de aliento sobre el contenido)
+   ───────────────────────────────────────────────────────────────────────────── */
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+
+.adaptive-motivational-panel {
+    background: linear-gradient(135deg, #E8F4FD 0%, #DCEEFB 100%);
+    border-left: 4px solid #1565C0;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 0 0 1.5rem 0;
+    font-style: italic;
+    color: #0D47A1;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    animation: fadeInDown 0.5s ease;
+}
+.adaptive-motivational-panel::before {
+    content: '\201C';
+    font-size: 2rem;
+    color: #90CAF9;
+    line-height: 0;
+    vertical-align: -0.5rem;
+    margin-right: 4px;
+    font-style: normal;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CARD LAYOUT — Aburrido (grid de tarjetas interactivas)
+   ───────────────────────────────────────────────────────────────────────────── */
+body.adaptive-card-layout .course-content ul.section {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+    padding: 0 !important;
+    list-style: none !important;
+}
+body.adaptive-card-layout .course-content .activity {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 1rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-top: 3px solid var(--emotion-accent-warm, #FF9800);
+}
+body.adaptive-card-layout .course-content .activity:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+body.adaptive-card-layout .course-content .activity .activityinstance {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+body.adaptive-card-layout .course-content .section-title {
+    grid-column: 1 / -1;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--emotion-primary-text, #00695C);
+    border-bottom: 2px solid var(--emotion-accent-warm, #FF9800);
+    padding-bottom: 0.4rem;
+    margin-bottom: 0.25rem;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   CONCENTRADO — Layout ligeramente más amplio y espaciado entre actividades
+   ───────────────────────────────────────────────────────────────────────────── */
+body[data-emotion="Concentrado"] #region-main {
+    max-width: 860px;
+    margin: 0 auto;
+}
+body[data-emotion="Concentrado"] .course-content .activity {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TIPOGRAFÍA SCRIPT/DISPLAY EN ENCABEZADOS (C.3, 2026-07-28) — universales, mismo
+   patrón "marcador en body + #region-main-box" que adaptive-zen-layout/
+   adaptive-hope-indicator (landmark fijo en las 4 plantillas base de Boost, no
+   depende del tipo de actividad). Restricción WCAG (script/display jamás en
+   cuerpo de texto) impuesta ESTRUCTURALMENTE por el selector: solo h1-h4 dentro
+   de #region-main-box, nunca p/li/td/cuerpo — no depende de que el LLM la
+   respete por instrucción de prompt. Fuentes empaquetadas localmente, ver
+   @font-face arriba. Sin cablear todavía a ningún whitelist/prompt — eso es
+   C.4/C.5, no C.3.
+   ───────────────────────────────────────────────────────────────────────────── */
+body.adaptive-script-heading #region-main-box h1,
+body.adaptive-script-heading #region-main-box h2,
+body.adaptive-script-heading #region-main-box h3,
+body.adaptive-script-heading #region-main-box h4 {
+    font-family: 'Caveat', cursive;
+}
+
+body.adaptive-display-heading #region-main-box h1,
+body.adaptive-display-heading #region-main-box h2,
+body.adaptive-display-heading #region-main-box h3,
+body.adaptive-display-heading #region-main-box h4 {
+    font-family: 'Bebas Neue', sans-serif;
+    letter-spacing: 0.02em;
+}
